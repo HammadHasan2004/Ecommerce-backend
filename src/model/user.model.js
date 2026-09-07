@@ -5,7 +5,16 @@ import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
   {
-    name: {
+     username: {
+        type: String,
+        required: true,
+        unique:true,
+        lowercase:true,
+        trim:true,
+        index:true,        
+     
+    },
+    fullname: {
       type: String,
       required: true,
       trim: true,
@@ -23,7 +32,6 @@ const userSchema = new Schema(
     },
     phone: {
       type: String,
-      required: true,
     },
     role: {
       type: String,
@@ -42,10 +50,10 @@ const userSchema = new Schema(
 );
 
 // Hash password before saving
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return ;
   this.password = await bcrypt.hash(this.password, 10);
-  next();
+  
 });
 
 // Check if entered password is correct
