@@ -20,4 +20,7 @@ import userRouter from './routes/user.routes.js';
 //routes declaraton
 app.use("/api/v1/users",userRouter)
 
+import supplierProfileRouter from "./routes/supplierProfile.routes.js";
+app.use("/api/v1/suppliers", supplierProfileRouter);
+
 export { app };

@@ -1,4 +1,3 @@
-// src/models/supplierProfile.model.js
 import mongoose, { Schema } from "mongoose";
 
 const supplierProfileSchema = new Schema(
@@ -19,6 +18,10 @@ const supplierProfileSchema = new Schema(
       required: true,
       trim: true,
     },
+    address: {
+      type: String,
+      trim: true,
+    },
     bio: {
       type: String,
       trim: true,
@@ -35,7 +38,4 @@ const supplierProfileSchema = new Schema(
   { timestamps: true }
 );
 
-export const SupplierProfile = mongoose.model(
-  "SupplierProfile",
-  supplierProfileSchema
-);
+export const SupplierProfile = mongoose.model("SupplierProfile", supplierProfileSchema);
