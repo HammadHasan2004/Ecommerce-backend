@@ -34,6 +34,14 @@ const supplierProfileSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+     averageRating: {
+      type: Number,
+      default: 0,
+    },
+    totalReviews: {
+      type: Number,
+      default: 0,
+    }
   },
   { timestamps: true }
 );

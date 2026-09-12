@@ -33,4 +33,13 @@ app.use("/api/v1/categories", categoryRouter);
 
 import orderRouter from "./routes/order.routes.js";
 app.use("/api/v1/orders", orderRouter);
+
+
+import reviewRouter from "./routes/review.routes.js";
+app.use("/api/v1/reviews", reviewRouter);
+
+
+import analyticsRouter from "./routes/analytics.routes.js";
+app.use("/api/v1/analytics", analyticsRouter);
+
 export { app };

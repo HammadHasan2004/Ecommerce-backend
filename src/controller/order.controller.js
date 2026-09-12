@@ -5,6 +5,8 @@ import { Order } from "../model/order.model.js";
 import { OrderItem } from "../model/orderItem.model.js";
 import { Product } from "../model/product.model.js";
 
+import { SupplierProfile } from "../model/supplierProfile.model.js";
+
 const createOrder = asyncHandler(async (req, res) => {
     // items expected: [{ productId, quantity }, { productId, quantity }, ...]
     const { items } = req.body;
@@ -105,4 +107,83 @@ const getOrderById = asyncHandler(async (req, res) => {
     );
 });
 
-export { createOrder, getMyOrders, getOrderById };
+//update order status by supplier
+const updateOrderStatus = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const allowedStatuses = ["confirmed", "delivered", "cancelled"];
+    if (!allowedStatuses.includes(status)) {
+        throw new ApiError(400, "Invalid status value");
+    }
+
+    const order = await Order.findById(id);
+
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+
+    // check karo yeh supplier is order mein shamil hai ya nahi
+    const supplierProfile = await SupplierProfile.findOne({ owner: req.user._id });
+
+    if (!supplierProfile) {
+        throw new ApiError(404, "Supplier profile not found");
+    }
+
+    const orderItems = await OrderItem.find({ order: order._id }).populate("product");
+
+    const supplierHasItemInOrder = orderItems.some(
+        (item) => item.product.supplier.toString() === supplierProfile._id.toString()
+    );
+
+    if (!supplierHasItemInOrder) {
+        throw new ApiError(403, "You are not allowed to update this order");
+    }
+
+    order.status = status;
+    await order.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, order, "Order status updated successfully")
+    );
+});
+
+//cancel order by customer only if status is pending
+const cancelOrder = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    const order = await Order.findById(id);
+
+    if (!order) {
+        throw new ApiError(404, "Order not found");
+    }
+
+    // sirf apni order cancel kar sake
+    if (order.buyer.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not allowed to cancel this order");
+    }
+
+    // sirf "pending" order cancel ho sakti hai
+    if (order.status !== "pending") {
+        throw new ApiError(400, `Cannot cancel an order that is already ${order.status}`);
+    }
+
+    // stock wapas add karo (kyunki order cancel ho rahi hai)
+    const orderItems = await OrderItem.find({ order: order._id });
+    for (const item of orderItems) {
+        const product = await Product.findById(item.product);
+        if (product) {
+            product.stock += item.quantity;
+            await product.save();
+        }
+    }
+
+    order.status = "cancelled";
+    await order.save();
+
+    return res.status(200).json(
+        new ApiResponse(200, order, "Order cancelled successfully")
+    );
+});
+
+export { createOrder, getMyOrders, getOrderById, updateOrderStatus, cancelOrder };
