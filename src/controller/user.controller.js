@@ -140,7 +140,7 @@ const loginUser = asyncHandler(async(req,res)=>{
 })
 //now creating function for logout
 const logoutUser = asyncHandler(async(req,res) => {
-    User.findByIdAndUpdate(
+    await User.findByIdAndUpdate(
         req.user._id,
         {
             $set: {
@@ -203,7 +203,7 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
            httpOnly:true,
            secure:true
        }
-       const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+       const {accessToken, refreshToken: newRefreshToken} = await generateAccessAndRefreshToken(user._id)
    
        return res
        .status(200)

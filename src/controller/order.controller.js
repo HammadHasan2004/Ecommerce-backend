@@ -99,11 +99,11 @@ const getOrderById = asyncHandler(async (req, res) => {
 
     const items = await OrderItem.find({ order: order._id }).populate(
         "product",
-        "name unit imageUrl"
+        "name unit imageUrl category"
     );
 
     return res.status(200).json(
-        new ApiResponse(200, { order, items }, "Order fetched successfully")
+        new ApiResponse(200, { ...order.toObject(), items }, "Order fetched successfully")
     );
 });
 
@@ -186,4 +186,39 @@ const cancelOrder = asyncHandler(async (req, res) => {
     );
 });
 
-export { createOrder, getMyOrders, getOrderById, updateOrderStatus, cancelOrder };
+const getSupplierOrders = asyncHandler(async (req, res) => {
+    const supplierProfile = await SupplierProfile.findOne({ owner: req.user._id });
+
+    if (!supplierProfile) {
+        throw new ApiError(404, "Supplier profile not found");
+    }
+
+    const products = await Product.find({ supplier: supplierProfile._id }).select("_id");
+    const productIds = products.map((p) => p._id);
+
+    const orderItems = await OrderItem.find({ product: { $in: productIds } })
+        .populate("product", "name unit imageUrl category");
+
+    const orderIds = [...new Set(orderItems.map((item) => item.order.toString()))];
+
+    const orders = await Order.find({ _id: { $in: orderIds } })
+        .populate("buyer", "fullname username")
+        .sort({ createdAt: -1 });
+
+    const ordersWithItems = orders.map((order) => {
+        const items = orderItems
+            .filter((item) => item.order.toString() === order._id.toString())
+            .map((item) => ({
+                product: item.product,
+                quantity: item.quantity,
+                price: item.priceAtOrder,
+            }));
+        return { ...order.toObject(), items };
+    });
+
+    return res.status(200).json(
+        new ApiResponse(200, ordersWithItems, "Supplier orders fetched successfully")
+    );
+});
+
+export { createOrder, getMyOrders, getOrderById, getSupplierOrders, updateOrderStatus, cancelOrder };

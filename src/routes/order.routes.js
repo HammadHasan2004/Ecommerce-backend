@@ -3,6 +3,7 @@ import {
     createOrder,
     getMyOrders,
     getOrderById,
+    getSupplierOrders,
     updateOrderStatus,
     cancelOrder,
 } from "../controller/order.controller.js";
@@ -14,6 +15,7 @@ const router = Router();
 // sab routes protected hain — order dena/dekhna sirf logged-in users kar sakte hain
 router.route("/").post(verifyJWT, createOrder);
 router.route("/my-orders").get(verifyJWT, getMyOrders);
+router.route("/supplier-orders").get(verifyJWT, verifySupplier, getSupplierOrders);
 router.route("/:id").get(verifyJWT, getOrderById);
 
 
